@@ -1,0 +1,40 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+	# Configuración común para ambas máquinas
+	config.vm.box = "ubuntu/focal64"  # Ubuntu 20.04 LTS
+	config.vm.synced_folder ".", "/vagrant", disabled: true
+	
+	# Configuración del nodo servidor (S)
+	config.vm.define "ddel-blaS" do |server|
+	  server.vm.hostname = "ddel-blaS"
+	  server.vm.network "private_network", ip: "192.168.56.110"
+	  
+	  server.vm.provider "virtualbox" do |vb|
+		vb.name = "ddel-blaS"
+		vb.memory = 1024
+		vb.cpus = 1
+		vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+	  end
+	  
+	  # Instalación de K3s en modo servidor
+	  server.vm.provision "shell", path: "scripts/master_node.sh"
+	end
+	
+	# Configuración del nodo trabajador (SW)
+	config.vm.define "ddel-blaSW" do |worker|
+	  worker.vm.hostname = "ddel-blaSW"
+	  worker.vm.network "private_network", ip: "192.168.56.111"
+	  
+	  worker.vm.provider "virtualbox" do |vb|
+		vb.name = "ddel-blaSW"
+		vb.memory = 512
+		vb.cpus = 1
+		vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+	  end
+	  
+	  # Instalación de K3s en modo agente
+	  worker.vm.provision "shell", path: "scripts/worker_node.sh"
+	end
+  end
