@@ -5,13 +5,16 @@ apt-get update
 
 # Configurar hosts
 cat >> /etc/hosts <<EOF
-192.168.56.110 [tu-login]S
-192.168.56.111 [tu-login]SW
+192.168.56.110 ddel-blaS
+192.168.56.111 ddel-blaSW
 EOF
 
 # Deshabilitar swap (requerido para Kubernetes)
 swapoff -a
 sed -i '/swap/s/^\(.*\)$/#\1/g' /etc/fstab
+
+# Crear directorio compartido ya que vagrant.synced_folder está deshabilitado
+mkdir -p /vagrant
 
 # Esperar a que el token esté disponible desde el nodo maestro
 while [ ! -f /vagrant/token_env ]; do
@@ -29,12 +32,11 @@ curl -sfL https://get.k3s.io | sh -s - --url=https://192.168.56.110:6443 --token
 mkdir -p /home/vagrant/.kube
 echo "export KUBECONFIG=/home/vagrant/.kube/config" >> /home/vagrant/.bashrc
 
-# Configurar acceso SSH sin contraseña
-mkdir -p /home/vagrant/.ssh
-cat > /home/vagrant/.ssh/id_rsa <<EOF
-#!/bin/bash
-ssh-keygen -t rsa -f /home/vagrant/.ssh/id_rsa -N ""
-cat /home/vagrant/.ssh/id_rsa.pub >> /home/vagrant/.ssh/authorized_keys
-EOF
-chmod +x /home/vagrant/.ssh/id_rsa
-su - vagrant -c "/home/vagrant/.ssh/id_rsa"
+# Configurar acceso SSH sin contraseña (método corregido)
+if [ ! -f /home/vagrant/.ssh/id_rsa ]; then
+  mkdir -p /home/vagrant/.ssh
+  su - vagrant -c "ssh-keygen -t rsa -f /home/vagrant/.ssh/id_rsa -N ''"
+  su - vagrant -c "cat /home/vagrant/.ssh/id_rsa.pub >> /home/vagrant/.ssh/authorized_keys"
+  chmod 600 /home/vagrant/.ssh/authorized_keys
+  chown -R vagrant:vagrant /home/vagrant/.ssh
+fi
