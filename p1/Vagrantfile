@@ -1,41 +1,79 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
+require 'json'
+
+# Cargar la configuración desde un archivo JSON
+config_file = File.join(File.dirname(__FILE__), "config.json")
+if File.exist?(config_file)
+  json_config = JSON.parse(File.read(config_file))
+else
+  raise "Archivo de configuración no encontrado: #{config_file}"
+end
+
 Vagrant.configure("2") do |config|
-	# Configuración común para ambas máquinas
-	config.vm.box = "ubuntu/focal64"  # Ubuntu 20.04 LTS
-	
-	# Habilitar la carpeta compartida (necesaria para el intercambio de token)
-	config.vm.synced_folder ".", "/vagrant", type: "virtualbox"
-	
-	# Configuración del nodo servidor (S)
-	config.vm.define "ddel-blaS" do |server|
-	  server.vm.hostname = "ddel-blaS"
-	  server.vm.network "private_network", ip: "192.168.56.110"
-	  
-	  server.vm.provider "virtualbox" do |vb|
-		vb.name = "ddel-blaS"
-		vb.memory = 1024
-		vb.cpus = 1
-		vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
-	  end
-	  
-	  # Instalación de K3s en modo servidor
-	  server.vm.provision "shell", path: "scripts/master_node.sh"
-	end
-	
-	# Configuración del nodo trabajador (SW)
-	config.vm.define "ddel-blaSW" do |worker|
-	  worker.vm.hostname = "ddel-blaSW"
-	  worker.vm.network "private_network", ip: "192.168.56.111"
-	  
-	  worker.vm.provider "virtualbox" do |vb|
-		vb.name = "ddel-blaSW"
-		vb.memory = 512
-		vb.cpus = 1
-		vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
-	  end
-	  
-	  # Instalación de K3s en modo agente
-	  worker.vm.provision "shell", path: "scripts/worker_node.sh"
-	end
+  # Configurar el box base desde el JSON
+  config.vm.box = json_config["box"] || "ubuntu/focal64"
+  
+  # Configurar carpetas compartidas desde el JSON
+  if json_config["shared_folders"]
+    json_config["shared_folders"].each do |folder|
+      config.vm.synced_folder folder["host_path"], folder["guest_path"], type: folder["type"]
+    end
   end
+  
+  # Configurar cada nodo definido en el JSON
+  json_config["nodes"].each do |node_conf|
+    config.vm.define node_conf["name"] do |node|
+      # Configuración básica del nodo
+      node.vm.hostname = node_conf["hostname"]
+      node.vm.network json_config["network"]["type"], ip: node_conf["ip"]
+      
+      # Configuración del proveedor VirtualBox
+      node.vm.provider "virtualbox" do |vb|
+        vb.name = node_conf["name"]
+        vb.memory = node_conf["memory"]
+        vb.cpus = node_conf["cpus"]
+        vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+      end
+      
+      # Crear archivo de variables de entorno para el nodo si existen
+      if node_conf["env_vars"] && !node_conf["env_vars"].empty?
+        env_file_content = ""
+        node_conf["env_vars"].each do |key, value|
+          env_file_content += "export #{key}=\"#{value}\"\n"
+        end
+        
+        # Escribir el archivo de entorno en el directorio actual
+        env_file_path = "#{node_conf["name"]}_env.sh"
+        File.write(env_file_path, env_file_content)
+        
+        # Copiar el archivo de entorno a la máquina virtual
+        node.vm.provision "file", source: env_file_path, destination: "/tmp/#{node_conf["name"]}_env.sh"
+        
+        # Mover el archivo al directorio compartido y configurarlo
+        node.vm.provision "shell", inline: <<-SHELL
+          mv /tmp/#{node_conf["name"]}_env.sh /vagrant/#{node_conf["name"]}_env.sh
+          chmod +x /vagrant/#{node_conf["name"]}_env.sh
+        SHELL
+      end
+      
+      # Copiar el script de aprovisionamiento a la máquina virtual
+      node.vm.provision "file", source: node_conf["script"], destination: "/tmp/#{File.basename(node_conf["script"])}"
+      
+      # Ejecutar el script de aprovisionamiento
+      node.vm.provision "shell", inline: <<-SHELL
+        # Mover el script al directorio de trabajo y dar permisos de ejecución
+        cp /tmp/#{File.basename(node_conf["script"])} /tmp/provision_script.sh
+        chmod +x /tmp/provision_script.sh
+        
+        # Cargar variables de entorno si existen
+        if [ -f "/vagrant/#{node_conf["name"]}_env.sh" ]; then
+          source /vagrant/#{node_conf["name"]}_env.sh
+        fi
+        
+        # Ejecutar el script de aprovisionamiento desde /tmp donde tiene permisos
+        /tmp/provision_script.sh
+      SHELL
+    end
+  end
+end
