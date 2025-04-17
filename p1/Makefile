@@ -6,7 +6,7 @@ SCRIPTS_DIR = scripts
 # Usar vagrant directamente (cambiar con WSL)
 VAGRANT = vagrant
 
-.PHONY: all up start stop restart destroy status clean check-master check-worker connect-master connect-worker deploy-app help
+.PHONY: all up start stop restart destroy status clean clean-secrets secure-token check-master check-worker connect-master connect-worker deploy-app help
 
 # Target por defecto
 all: up
@@ -32,7 +32,7 @@ restart: stop start
 	@echo "Cluster K3s reiniciado"
 
 # Destruir el clúster por completo
-destroy:
+destroy: clean-secrets
 	@echo "Destruyendo el cluster K3s..."
 	$(VAGRANT) destroy -f
 	@if exist .vagrant\machines\*\virtualbox\action_provision del /F .vagrant\machines\*\virtualbox\action_provision
@@ -42,8 +42,21 @@ status:
 	@echo "Estado del cluster K3s:"
 	$(VAGRANT) status
 
+# Limpiar archivos sensibles
+clean-secrets:
+	@echo "Limpiando archivos sensibles..."
+	$(VAGRANT) ssh $(MASTER_NODE) -c "bash /vagrant/scripts/cleanup.sh" || echo "No se pudieron limpiar secretos en la VM."
+	@echo "Limpiando archivos sensibles locales..."
+	@if exist token_env del /F token_env
+	@if exist kubeconfig.yaml del /F kubeconfig.yaml
+
+# Verificar permisos del token
+secure-token:
+	@echo "Verificando permisos del token..."
+	$(VAGRANT) ssh $(MASTER_NODE) -c "if [ -f /vagrant/token_env ]; then chmod 600 /vagrant/token_env; echo 'Permisos corregidos.'; else echo 'Archivo token_env no encontrado.'; fi"
+
 # Limpieza completa del proyecto
-clean: destroy
+clean: clean-secrets destroy
 	@echo "Limpiando archivos temporales..."
 	@if exist .vagrant rmdir /S /Q .vagrant
 
@@ -89,6 +102,8 @@ help:
 	@echo "  restart        - Reinicia las maquinas virtuales"
 	@echo "  destroy        - Destruye completamente el cluster"
 	@echo "  status         - Muestra el estado actual de las maquinas virtuales"
+	@echo "  clean-secrets  - Elimina archivos sensibles como tokens y kubeconfig"
+	@echo "  secure-token   - Verifica y corrige permisos del archivo token_env"
 	@echo "  clean          - Elimina todas las maquinas y archivos temporales"
 	@echo "  check-master   - Verifica el estado del nodo master"
 	@echo "  check-worker   - Verifica el estado del nodo worker"

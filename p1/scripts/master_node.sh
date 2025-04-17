@@ -27,9 +27,12 @@ echo "export KUBECONFIG=/home/vagrant/.kube/config" >> /home/vagrant/.bashrc
 
 # Obtener el token para el nodo worker
 TOKEN=$(cat /var/lib/rancher/k3s/server/node-token)
+
+# Crear el archivo token_env 
+install -m 600 /dev/null /vagrant/token_env
 echo "export K3S_TOKEN=\"$TOKEN\"" > /vagrant/token_env
 
-# Configurar acceso SSH sin contraseña (método corregido)
+# Configurar acceso SSH sin contraseña
 if [ ! -f /home/vagrant/.ssh/id_rsa ]; then
   mkdir -p /home/vagrant/.ssh
   su - vagrant -c "ssh-keygen -t rsa -f /home/vagrant/.ssh/id_rsa -N ''"
@@ -37,6 +40,3 @@ if [ ! -f /home/vagrant/.ssh/id_rsa ]; then
   chmod 600 /home/vagrant/.ssh/authorized_keys
   chown -R vagrant:vagrant /home/vagrant/.ssh
 fi
-
-# Asegurarse que el token sea accesible para el nodo worker
-chmod 644 /vagrant/token_env
