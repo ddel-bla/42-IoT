@@ -43,7 +43,7 @@ source /vagrant/token_env
 
 # Instalar K3s en modo agente
 echo "Instalando K3s en modo agente..."
-curl -sfL https://get.k3s.io | sh -s - --url=https://192.168.56.110:6443 --token="$K3S_TOKEN" --node-ip=192.168.56.111 --flannel-iface=eth1
+curl -sfL https://get.k3s.io | sh -s - --url=https://192.168.56.110:6443 --token="$K3S_TOKEN" --node-ip=192.168.56.111
 
 # Configurar kubectl para el usuario vagrant
 mkdir -p /home/vagrant/.kube

@@ -17,7 +17,7 @@ sed -i '/swap/s/^\(.*\)$/#\1/g' /etc/fstab
 mkdir -p /vagrant
 
 # Instalar K3s en modo servidor
-curl -sfL https://get.k3s.io | sh -s - --disable=traefik --node-ip=192.168.56.110 --advertise-address=192.168.56.110 --flannel-iface=eth1
+curl -sfL https://get.k3s.io | sh -s - --disable=traefik --node-ip=192.168.56.110 --advertise-address=192.168.56.110
 
 # Configurar kubectl para el usuario vagrant
 mkdir -p /home/vagrant/.kube
