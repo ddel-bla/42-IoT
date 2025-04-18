@@ -32,7 +32,7 @@ restart: stop start
 	@echo "Cluster K3s reiniciado"
 
 # Destruir el clúster por completo
-destroy: clean-secrets
+destroy: 
 	@echo "Destruyendo el cluster K3s..."
 	$(VAGRANT) destroy -f
 	@if exist .vagrant\machines\*\virtualbox\action_provision del /F .vagrant\machines\*\virtualbox\action_provision
@@ -45,10 +45,11 @@ status:
 # Limpiar archivos sensibles
 clean-secrets:
 	@echo "Limpiando archivos sensibles..."
-	$(VAGRANT) ssh $(MASTER_NODE) -c "bash /vagrant/scripts/cleanup.sh" || echo "No se pudieron limpiar secretos en la VM."
-	@echo "Limpiando archivos sensibles locales..."
 	@if exist token_env del /F token_env
 	@if exist kubeconfig.yaml del /F kubeconfig.yaml
+	@if exist ddel-blaS_env.sh del /F ddel-blaS_env.sh
+	@if exist ddel-blaSW_env.sh del /F ddel-blaSW_env.sh
+	@echo "Limpieza completada."
 
 # Verificar permisos del token
 secure-token:
@@ -56,7 +57,7 @@ secure-token:
 	$(VAGRANT) ssh $(MASTER_NODE) -c "if [ -f /vagrant/token_env ]; then chmod 600 /vagrant/token_env; echo 'Permisos corregidos.'; else echo 'Archivo token_env no encontrado.'; fi"
 
 # Limpieza completa del proyecto
-clean: clean-secrets destroy
+clean: destroy clean-secrets
 	@echo "Limpiando archivos temporales..."
 	@if exist .vagrant rmdir /S /Q .vagrant
 
@@ -90,6 +91,24 @@ deploy-app:
 	$(VAGRANT) ssh $(MASTER_NODE) -c "sudo kubectl get pods -o wide"
 	$(VAGRANT) ssh $(MASTER_NODE) -c "sudo kubectl get svc nginx -o wide"
 
+# Verificación completa del clúster
+check:
+	@echo "=== Verificando estado de los nodos ==="
+	$(VAGRANT) ssh $(MASTER_NODE) -c "sudo kubectl get nodes -o wide"
+	@echo ""
+	@echo "=== Verificando configuración de red del master ==="
+	$(VAGRANT) ssh $(MASTER_NODE) -c "ip a | grep -A 2 192.168.56.110"
+	@echo ""
+	@echo "=== Verificando configuración de red del worker ==="
+	$(VAGRANT) ssh $(WORKER_NODE) -c "ip a | grep -A 2 192.168.56.111"
+	@echo ""
+	@echo "=== Verificando conectividad entre nodos ==="
+	$(VAGRANT) ssh $(MASTER_NODE) -c "ping -c 2 $(WORKER_NODE)"
+	$(VAGRANT) ssh $(WORKER_NODE) -c "ping -c 2 $(MASTER_NODE)"
+	@echo ""
+	@echo "=== Verificando pods en ejecución ==="
+	$(VAGRANT) ssh $(MASTER_NODE) -c "sudo kubectl get pods -o wide --all-namespaces"
+	
 # Mostrar información de ayuda
 help:
 	@echo "Makefile para gestion de cluster K3s con Vagrant"
@@ -105,6 +124,7 @@ help:
 	@echo "  clean-secrets  - Elimina archivos sensibles como tokens y kubeconfig"
 	@echo "  secure-token   - Verifica y corrige permisos del archivo token_env"
 	@echo "  clean          - Elimina todas las maquinas y archivos temporales"
+	@echo "  check     		- Verifica el subject"
 	@echo "  check-master   - Verifica el estado del nodo master"
 	@echo "  check-worker   - Verifica el estado del nodo worker"
 	@echo "  connect-master - Conecta por SSH al nodo master"
