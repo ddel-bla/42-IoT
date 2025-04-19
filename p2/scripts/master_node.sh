@@ -30,21 +30,27 @@ mkdir -p /vagrant
 
 # Instalar K3s en modo servidor con configuraciones específicas
 echo "Instalando K3s en modo servidor..."
-curl -sfL https://get.k3s.io | sh -s - \
-# No deshabilitamos traefik porque lo necesitamos para Ingress
-  --node-ip=192.168.56.110 \
-  --advertise-address=192.168.56.110
+# Usamos la variable INSTALL_K3S_EXEC para pasar los argumentos con permisos adecuados
+curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--node-ip=192.168.56.110 --advertise-address=192.168.56.110 --write-kubeconfig-mode=644" sh -
 
 # Esperar a que K3s se inicie completamente
 echo "Esperando a que K3s esté listo..."
-sleep 10
+sleep 20
 
 # Configurar kubectl para el usuario vagrant
 echo "Configurando kubectl para usuario vagrant..."
 mkdir -p /home/vagrant/.kube
 cp /etc/rancher/k3s/k3s.yaml /home/vagrant/.kube/config
+# Reemplazar 127.0.0.1 por la IP real del nodo
+sed -i 's/127.0.0.1/192.168.56.110/g' /home/vagrant/.kube/config
+chmod 644 /home/vagrant/.kube/config
 chown -R vagrant:vagrant /home/vagrant/.kube
 echo "export KUBECONFIG=/home/vagrant/.kube/config" >> /home/vagrant/.bashrc
+
+# También copiar el archivo kubeconfig al directorio compartido
+cp /etc/rancher/k3s/k3s.yaml /vagrant/kubeconfig.yaml
+sed -i 's/127.0.0.1/192.168.56.110/g' /vagrant/kubeconfig.yaml
+chmod 644 /vagrant/kubeconfig.yaml
 
 # Crear manifiestos para las aplicaciones web en el directorio compartido
 echo "Creando manifiestos para las aplicaciones web..."

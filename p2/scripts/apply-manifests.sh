@@ -6,10 +6,14 @@
 
 echo "=== Aplicando manifiestos de Kubernetes ==="
 
+# Usar la variable de entorno KUBECONFIG para el usuario vagrant
+export KUBECONFIG=/home/vagrant/.kube/config
+
 # Esperar a que K3s esté completamente listo
 echo "Esperando a que K3s esté listo..."
 until kubectl get nodes | grep -q " Ready"; do
   sleep 5
+  echo "Esperando a que el nodo esté listo..."
 done
 
 # Aplicar los manifiestos
