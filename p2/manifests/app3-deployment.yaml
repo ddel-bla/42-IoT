@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app3
+  labels:
+    app: app3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app3
+  template:
+    metadata:
+      labels:
+        app: app3
+    spec:
+      containers:
+      - name: app3
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: html-volume
+          mountPath: /usr/share/nginx/html
+      volumes:
+      - name: html-volume
+        configMap:
+          name: app3-html
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app3-html
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>App 3 (Default)</title>
+      <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; background-color: #f5fffa; }
+        h1 { color: #2e8b57; }
+      </style>
+    </head>
+    <body>
+      <h1>¡Bienvenido a App 3 (Default)!</h1>
+      <p>Esta es la aplicación por defecto para todos los hosts no especificados.</p>
+    </body>
+    </html>
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app3-service
+spec:
+  selector:
+    app: app3
+  ports:
+  - port: 80
+    targetPort: 80
+  type: ClusterIP

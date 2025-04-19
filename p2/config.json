@@ -1,0 +1,31 @@
+{
+	"cluster_name": "k3s-p2-cluster",
+	"box": "ubuntu/focal64",
+	"nodes": [
+	  {
+		"name": "ddel-blaS",
+		"role": "server",
+		"ip": "192.168.56.110",
+		"memory": 1024,
+		"cpus": 1,
+		"hostname": "ddel-blaS",
+		"script": "scripts/master_node.sh",
+		"env_vars": {
+		  "K3S_NODE_NAME": "ddel-blaS",
+		  "K3S_KUBECONFIG_MODE": "644",
+		  "K3S_KUBECONFIG_OUTPUT": "/vagrant/kubeconfig.yaml"
+		}
+	  }
+	],
+	"network": {
+	  "type": "private_network",
+	  "subnet": "192.168.56.0/24"
+	},
+	"shared_folders": [
+	  {
+		"host_path": ".",
+		"guest_path": "/vagrant",
+		"type": "virtualbox"
+	  }
+	]
+  }
