@@ -17,7 +17,7 @@ cat >> /etc/hosts <<EOF
 192.168.56.111 ddel-blaSW
 EOF
 
-# Deshabilitar swap (requisito de Kubernetes)
+#	equisito de Kubernetes)
 echo "Deshabilitando swap..."
 swapoff -a
 sed -i '/swap/s/^\(.*\)$/#\1/g' /etc/fstab

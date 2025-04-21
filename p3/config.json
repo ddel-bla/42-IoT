@@ -1,0 +1,35 @@
+{
+	"cluster_name": "argocd-cluster",
+	"scripts_dir": "scripts",
+	"kubernetes_dir": "kubernetes",
+	"docker_dir": "docker",
+	"github_repo": {
+	  "url": "https://github.com/TU_USUARIO/inception-of-things-p3.git",
+	  "branch": "main"
+	},
+	"argocd": {
+	  "namespace": "argocd",
+	  "app_name": "webapp",
+	  "git_path": "kubernetes/base"
+	},
+	"app": {
+	  "name": "webapp",
+	  "namespace": "dev",
+	  "versions": ["v1", "v2"]
+	},
+	"k3d": {
+	  "ports": [
+		{
+		  "host": "8080",
+		  "container": "80",
+		  "target": "loadbalancer"
+		},
+		{
+		  "host": "8443",
+		  "container": "443",
+		  "target": "loadbalancer"
+		}
+	  ],
+	  "agents": 2
+	}
+  }
