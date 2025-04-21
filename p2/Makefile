@@ -6,7 +6,7 @@ MANIFESTS_DIR = manifests
 # Usar vagrant directamente (cambiar con WSL)
 VAGRANT = vagrant
 
-.PHONY: all up start stop restart destroy status clean apply-manifests check connect-server debug-ingress help
+.PHONY: all up start stop restart destroy status clean apply-manifests check connect-server debug-ingress curl help
 
 # Target por defecto
 all: up
@@ -82,6 +82,20 @@ debug-ingress:
 	@echo "=== Verificando pods de Traefik ==="
 	$(VAGRANT) ssh $(SERVER_NODE) -c "sudo kubectl get pods -n kube-system | grep traefik"
 
+# Probar todas las aplicaciones con curl
+curl:
+	@echo "=== Probando app1.com ==="
+	$(VAGRANT) ssh $(SERVER_NODE) -c "curl -H 'Host: app1.com' http://localhost"
+	@echo ""
+	@echo "=== Probando app2.com ==="
+	$(VAGRANT) ssh $(SERVER_NODE) -c "curl -H 'Host: app2.com' http://localhost"
+	@echo ""
+	@echo "=== Probando aplicación default con host personalizado ==="
+	$(VAGRANT) ssh $(SERVER_NODE) -c "curl -H 'Host: cualquier-cosa.com' http://localhost"
+	@echo ""
+	@echo "=== Probando aplicación default sin host específico ==="
+	$(VAGRANT) ssh $(SERVER_NODE) -c "curl http://localhost"
+
 # Mostrar información de ayuda
 help:
 	@echo "Makefile para gestion de servidor K3s con Vagrant"
@@ -97,6 +111,7 @@ help:
 	@echo "  check           - Verifica el estado de los componentes"
 	@echo "  connect-server  - Conecta por SSH al servidor"
 	@echo "  debug-ingress   - Muestra información detallada del Ingress"
+	@echo "  curl            - Prueba todas las aplicaciones usando curl"
 	@echo "  destroy         - Destruye completamente el servidor"
 	@echo "  clean           - Elimina la máquina y archivos temporales"
 	@echo "  help            - Muestra esta ayuda"
