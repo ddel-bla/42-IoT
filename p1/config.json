@@ -9,10 +9,7 @@
 		"memory": 1024,
 		"cpus": 1,
 		"hostname": "ddel-blaS",
-		"scripts": [
-		  "scripts/common_setup.sh",
-		  "scripts/master_node.sh"
-		],
+		"script": "scripts/master_node.sh",
 		"env_vars": {
 		  "K3S_NODE_NAME": "ddel-blaS",
 		  "K3S_KUBECONFIG_MODE": "644",
@@ -26,10 +23,7 @@
 		"memory": 512,
 		"cpus": 1,
 		"hostname": "ddel-blaSW",
-		"scripts": [
-		  "scripts/common_setup.sh",
-		  "scripts/worker_node.sh"
-		],
+		"script": "scripts/worker_node.sh",
 		"env_vars": {
 		  "K3S_NODE_NAME": "ddel-blaSW",
 		  "K3S_URL": "https://192.168.56.110:6443"
@@ -47,4 +41,4 @@
 		"type": "virtualbox"
 	  }
 	]
-}
+  }

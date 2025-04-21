@@ -9,11 +9,7 @@
 		"memory": 1024,
 		"cpus": 1,
 		"hostname": "ddel-blaS",
-		"scripts": [
-		  "scripts/common_setup.sh",
-		  "scripts/master_node.sh",
-		  "scripts/apply-manifests.sh"
-		],
+		"script": "scripts/master_node.sh",
 		"env_vars": {
 		  "K3S_NODE_NAME": "ddel-blaS",
 		  "K3S_KUBECONFIG_MODE": "644",
@@ -32,4 +28,4 @@
 		"type": "virtualbox"
 	  }
 	]
-}
+  }
