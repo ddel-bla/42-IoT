@@ -95,6 +95,7 @@ curl:
 	@echo ""
 	@echo "=== Probando aplicación default sin host específico ==="
 	$(VAGRANT) ssh $(SERVER_NODE) -c "curl http://localhost"
+	curl -H 'Host: app1.com' 192.168.56.110"
 
 # Mostrar información de ayuda
 help:

@@ -4,13 +4,13 @@
 	"kubernetes_dir": "kubernetes",
 	"docker_dir": "docker",
 	"github_repo": {
-	  "url": "https://github.com/TU_USUARIO/inception-of-things-p3.git",
+	  "url": "https://github.com/ddel-bla/42-IoT.git",
 	  "branch": "main"
 	},
 	"argocd": {
 	  "namespace": "argocd",
 	  "app_name": "webapp",
-	  "git_path": "kubernetes/base"
+	  "git_path": "p3/kubernetes/base"
 	},
 	"app": {
 	  "name": "webapp",
