@@ -4,62 +4,27 @@
 # Inception-of-Things - Parte 1
 #
 
+# Cargar las funciones comunes
+source /vagrant/scripts/common_setup.sh
+
 echo "=== Iniciando configuración del nodo Master ==="
 
-# Actualizar repositorios del sistema
-echo "Actualizando repositorios..."
-apt-get update
+# Ejecutar configuración base del sistema
+setup_base_system
 
-# Configurar archivo hosts para resolución local de nombres
-echo "Configurando archivo /etc/hosts..."
-cat >> /etc/hosts <<EOF
-192.168.56.110 ddel-blaS
-192.168.56.111 ddel-blaSW
-EOF
+# Configurar archivo hosts para p1
+setup_hosts "p1-master"
 
-# Deshabilitar swap (requisito de Kubernetes)
-echo "Deshabilitando swap..."
-swapoff -a
-sed -i '/swap/s/^\(.*\)$/#\1/g' /etc/fstab
+# Instalar K3s en modo master (con traefik deshabilitado)
+install_k3s_master "true"
 
-# Crear directorio compartido para los archivos de Vagrant
-echo "Creando directorio compartido..."
-mkdir -p /vagrant
+# Configurar kubectl
+setup_kubectl
 
-# Instalar K3s en modo servidor con configuraciones específicas
-echo "Instalando K3s en modo servidor..."
-curl -sfL https://get.k3s.io | sh -s - \
-  --disable=traefik \
-  --node-ip=192.168.56.110 \
-  --advertise-address=192.168.56.110
-# Esperar a que K3s se inicie completamente
-echo "Esperando a que K3s esté listo..."
-sleep 10
+# Generar y guardar el token para el worker
+save_k3s_token
 
-# Configurar kubectl para el usuario vagrant
-echo "Configurando kubectl para usuario vagrant..."
-mkdir -p /home/vagrant/.kube
-cp /etc/rancher/k3s/k3s.yaml /home/vagrant/.kube/config
-chown -R vagrant:vagrant /home/vagrant/.kube
-echo "export KUBECONFIG=/home/vagrant/.kube/config" >> /home/vagrant/.bashrc
-
-# Obtener el token para el nodo worker y guardarlo de forma segura
-echo "Generando token para el nodo worker..."
-TOKEN=$(cat /var/lib/rancher/k3s/server/node-token)
-
-# Crear el archivo token_env con permisos restrictivos
-install -m 600 /dev/null /vagrant/token_env
-echo "export K3S_TOKEN=\"$TOKEN\"" > /vagrant/token_env
-echo "Token generado y almacenado con permisos 600"
-
-# Configurar acceso SSH sin contraseña
-echo "Configurando acceso SSH sin contraseña..."
-if [ ! -f /home/vagrant/.ssh/id_rsa ]; then
-  mkdir -p /home/vagrant/.ssh
-  su - vagrant -c "ssh-keygen -t rsa -f /home/vagrant/.ssh/id_rsa -N ''"
-  su - vagrant -c "cat /home/vagrant/.ssh/id_rsa.pub >> /home/vagrant/.ssh/authorized_keys"
-  chmod 600 /home/vagrant/.ssh/authorized_keys
-  chown -R vagrant:vagrant /home/vagrant/.ssh
-fi
+# Configurar SSH
+setup_ssh
 
 echo "=== Configuración del nodo Master completada ==="

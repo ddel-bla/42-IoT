@@ -59,23 +59,43 @@ Vagrant.configure("2") do |config|
         SHELL
       end
       
-      # Copiar el script de aprovisionamiento a la máquina virtual
-      node.vm.provision "file", source: node_conf["script"], destination: "/tmp/#{File.basename(node_conf["script"])}"
+      # Procesar scripts (compatible con array y string individual)
+      scripts = []
+      if node_conf["scripts"]
+        # Si "scripts" es un array, usarlo
+        if node_conf["scripts"].is_a?(Array)
+          scripts = node_conf["scripts"]
+        # Si es un string, convertirlo a array para compatibilidad
+        elsif node_conf["scripts"].is_a?(String)
+          scripts = [node_conf["scripts"]]
+        end
+      elsif node_conf["script"]
+        # Compatibilidad con configuración anterior
+        scripts = [node_conf["script"]]
+      end
       
-      # Ejecutar el script de aprovisionamiento
-      node.vm.provision "shell", inline: <<-SHELL
-        # Mover el script al directorio de trabajo y dar permisos de ejecución
-        cp /tmp/#{File.basename(node_conf["script"])} /tmp/provision_script.sh
-        chmod +x /tmp/provision_script.sh
+      # Copiar y ejecutar cada script en orden
+      scripts.each_with_index do |script_path, index|
+        # Copiar el script a la máquina virtual
+        node.vm.provision "file", source: script_path, destination: "/tmp/script_#{index}_#{File.basename(script_path)}"
         
-        # Cargar variables de entorno si existen
-        if [ -f "/vagrant/#{node_conf["name"]}_env.sh" ]; then
-          source /vagrant/#{node_conf["name"]}_env.sh
-        fi
-        
-        # Ejecutar el script de aprovisionamiento desde /tmp donde tiene permisos
-        /tmp/provision_script.sh
-      SHELL
+        # Ejecutar el script
+        node.vm.provision "shell", inline: <<-SHELL
+          # Mover el script al directorio de trabajo y dar permisos de ejecución
+          cp /tmp/script_#{index}_#{File.basename(script_path)} /tmp/provision_script_#{index}.sh
+          chmod +x /tmp/provision_script_#{index}.sh
+          
+          # Cargar variables de entorno si existen
+          if [ -f "/vagrant/#{node_conf["name"]}_env.sh" ]; then
+            source /vagrant/#{node_conf["name"]}_env.sh
+          fi
+          
+          echo "Ejecutando script #{index + 1}/#{scripts.length}: #{File.basename(script_path)}"
+          
+          # Ejecutar el script de aprovisionamiento desde /tmp donde tiene permisos
+          /tmp/provision_script_#{index}.sh
+        SHELL
+      end
     end
   end
 end
