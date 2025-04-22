@@ -22,7 +22,7 @@ if k3d cluster list | grep -q "$K3D_CLUSTER_NAME"; then
     echo -e "  ${GREEN}✓${NC} Clúster K3d '$K3D_CLUSTER_NAME' encontrado."
     
     # Verificar si el clúster está en ejecución
-    if k3d cluster list | grep "$K3D_CLUSTER_NAME" | grep -q "running"; then
+    if kubectl get nodes &> /dev/null; then
         echo -e "  ${GREEN}✓${NC} Clúster K3d está en ejecución."
     else
         echo -e "  ${RED}✗${NC} Clúster K3d no está en ejecución."
