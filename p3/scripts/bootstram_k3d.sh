@@ -1,10 +1,13 @@
 #!/bin/bash
 #
-# Script de instalación y configuración de K3d y Argo CD
+# Script para configurar K3d
 # Inception-of-Things - Parte 3
 #
 
-echo "=== Iniciando instalación de K3d y Argo CD ==="
+# Cargar configuraciones
+source ./configs.sh
+
+echo "=== Iniciando instalación de K3d ==="
 
 # Verificar si Docker está instalado
 if ! command -v docker &> /dev/null; then
@@ -54,7 +57,7 @@ fi
 
 # Crear un clúster K3d
 echo "Creando un clúster K3d..."
-k3d cluster create argocd-cluster --api-port 6550 -p "8080:80@loadbalancer" -p "8443:443@loadbalancer" --agents 2
+k3d cluster create $K3D_CLUSTER_NAME --api-port 6550 -p "8080:80@loadbalancer" -p "8443:443@loadbalancer" --agents 2
 
 # Esperar a que el clúster esté listo
 echo "Esperando a que el clúster K3d esté listo..."
@@ -65,38 +68,7 @@ done
 
 # Crear los namespaces necesarios
 echo "Creando namespaces..."
-kubectl create namespace argocd
-kubectl create namespace dev
+kubectl create namespace $ARGOCD_NAMESPACE
+kubectl create namespace $APP_NAMESPACE
 
-# Instalar Argo CD
-echo "Instalando Argo CD..."
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-
-# Esperar a que Argo CD esté listo
-echo "Esperando a que todos los pods de Argo CD estén listos..."
-kubectl wait --for=condition=Ready pods --all -n argocd --timeout=300s
-
-# Configurar el acceso a la interfaz de Argo CD
-echo "Configurando acceso a la interfaz de Argo CD..."
-kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
-
-# Obtener la contraseña de admin de Argo CD
-echo "Obteniendo la contraseña de admin de Argo CD..."
-ARGOCD_PASS=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
-echo "Usuario: admin"
-echo "Contraseña: $ARGOCD_PASS"
-
-# Instalar la CLI de Argo CD
-if ! command -v argocd &> /dev/null; then
-    echo "Instalando CLI de Argo CD..."
-    sudo curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-    sudo chmod +x /usr/local/bin/argocd
-else
-    echo "CLI de Argo CD ya está instalada"
-fi
-
-echo "=== Instalación completada ==="
-echo "Acceda a la interfaz web de Argo CD en: http://localhost:8080"
-echo "O use la CLI de Argo CD: argocd login localhost:8080"
-echo ""
-echo "Para continuar con la configuración, ejecute el script: setup-argocd.sh"
+echo "=== Configuración de K3d completada ==="

@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: webapp
-        image: webapp:v1  # Esta imagen se cambiará entre v1 y v2
+        image: webapp:v1  # Imagen base
         ports:
         - containerPort: 80
         resources:
