@@ -5,7 +5,7 @@
 #
 
 # Cargar configuraciones
-source ./configs.sh
+source ./scripts/configs.sh
 
 echo "=== Construyendo imágenes Docker ==="
 

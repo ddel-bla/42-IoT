@@ -5,7 +5,7 @@
 #
 
 # Cargar configuraciones
-source ./configs.sh
+source ./scripts/configs.sh
 
 echo "=== Configurando aplicación en Argo CD ==="
 
@@ -61,7 +61,7 @@ spec:
   source:
     repoURL: $GITHUB_REPO
     targetRevision: $GIT_BRANCH
-    path: p3/kustomize/overlays/dev
+    path: $GIT_PATH/overlays/dev
   destination:
     server: https://kubernetes.default.svc
     namespace: $DEV_NAMESPACE

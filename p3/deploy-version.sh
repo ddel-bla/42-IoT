@@ -5,7 +5,7 @@
 #
 
 # Cargar configuraciones
-source ./configs.sh
+source ./scripts/configs.sh
 
 # Verificar que se haya proporcionado un número de versión
 if [ "$#" -ne 1 ]; then
@@ -44,10 +44,10 @@ fi
 
 # Definir la ruta del overlay según la versión
 if [ "$VERSION" == "1" ]; then
-    OVERLAY_PATH="p3/kustomize/overlays/dev"
+    OVERLAY_PATH="$GIT_PATH/overlays/dev"
     VERSION_IMAGE="$IMAGE_NAME:$IMAGE_TAG_V1"
 elif [ "$VERSION" == "2" ]; then
-    OVERLAY_PATH="p3/kustomize/overlays/prod"
+    OVERLAY_PATH="$GIT_PATH/overlays/prod"
     VERSION_IMAGE="$IMAGE_NAME:$IMAGE_TAG_V2"
 fi
 
